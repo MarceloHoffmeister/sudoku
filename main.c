@@ -56,7 +56,7 @@ int main () {
  * Inicializa o SUDOKU a partir de um novo jogo ou estado de jogo anterior
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-FILE* carregar (char quadro[SIZE][SIZE]) {
+FILE* carregar(char quadro[SIZE][SIZE]) {
 	int opcao;
     char gameName[50];
 
@@ -76,8 +76,9 @@ FILE* carregar (char quadro[SIZE][SIZE]) {
 
 		// continuar jogo
 		case 2:
-            carregar_continuar_jogo(quadro, gameName);
-			break;
+            puts("Nome do arquivo a ser carregado: ");
+            scanf("%s", gameName);
+            return carregar_continuar_jogo(quadro, gameName);
 
 		// retornar ao menu anterior
 		case 9:
@@ -94,8 +95,26 @@ FILE* carregar (char quadro[SIZE][SIZE]) {
  * Carrega um estado de jogo a partir de um arquivo binario
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-FILE* carregar_continuar_jogo (char quadro[SIZE][SIZE], char *nome_arquivo) {
-	// TODO
+FILE* carregar_continuar_jogo(char quadro[SIZE][SIZE], char *nome_arquivo) {
+    FILE *file;
+    int n = 0;
+
+    sprintf(nome_arquivo, "%s.dat", nome_arquivo);
+
+    file = fopen(nome_arquivo, "rb");
+
+    if (file == NULL) printf("Erro ao abrir arquivo!\n");
+
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            fread(&n, sizeof(int), 1, file);
+            quadro[i][j] = n;
+        }
+    }
+
+    fclose(file);
+
+    return file;
 }
 
 /* -----------------------------------------------------------------------------
@@ -113,8 +132,8 @@ void carregar_novo_jogo(char quadro[SIZE][SIZE], char *nome_arquivo) {
 
     if (file == NULL) printf("Erro ao abrir arquivo!\n");
 
-    for (int i = 0; i < 9; i++) {
-        for (int j = 0; j < 9; j++) {
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
             fscanf(file, "%d ", &n);
             quadro[i][j] = n;
         }
@@ -128,8 +147,27 @@ void carregar_novo_jogo(char quadro[SIZE][SIZE], char *nome_arquivo) {
  * Criar arquivo binario
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-FILE* criar_arquivo_binario (char quadro[SIZE][SIZE]) {
-	// TODO
+FILE* criar_arquivo_binario(char quadro[SIZE][SIZE]) {
+	FILE *file;
+    const int gameNameLength = 8;
+    char *gameName = (char*) malloc(sizeof(char)*(gameNameLength+7));
+    int n = 0;
+
+    gen_random(gameName, gameNameLength);
+    sprintf(gameName, "%s.dat", gameName);
+
+    file = fopen(gameName, "wb");
+
+    if (file == NULL) puts("Erro ao abrir arquivo binário\n");
+
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            n = quadro[i][j];
+            fwrite(&n, sizeof(int), 1, file);
+        }
+    }
+
+    fclose(file);
 }
 
 /* -----------------------------------------------------------------------------
@@ -258,7 +296,7 @@ void imprimir (const char quadro[SIZE][SIZE]) {
  * Realiza toda a logica do jogo
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-void jogar () {
+void jogar() {
 	int opcao;
 	char quadro[9][9] = {
             {0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -283,7 +321,7 @@ void jogar () {
 		menu();
 		opcao = le_opcao();
 
-		switch (opcao) {
+		switch(opcao) {
 
 		// carregar sudoku
 		case 1:
