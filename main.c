@@ -101,9 +101,11 @@ FILE* carregar_continuar_jogo(char quadro[SIZE][SIZE], char *nome_arquivo) {
 
     sprintf(nome_arquivo, "%s.dat", nome_arquivo);
 
-    file = fopen(nome_arquivo, "rb");
+    file = fopen(nome_arquivo, "rb+");
 
     if (file == NULL) printf("Erro ao abrir arquivo!\n");
+
+    fseek(file, sizeof(int)*((SIZE*SIZE)*-1), SEEK_END);
 
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
@@ -111,8 +113,6 @@ FILE* carregar_continuar_jogo(char quadro[SIZE][SIZE], char *nome_arquivo) {
             quadro[i][j] = n;
         }
     }
-
-    fclose(file);
 
     return file;
 }
@@ -156,7 +156,7 @@ FILE* criar_arquivo_binario(char quadro[SIZE][SIZE]) {
     gen_random(gameName, gameNameLength);
     sprintf(gameName, "%s.dat", gameName);
 
-    file = fopen(gameName, "wb");
+    file = fopen(gameName, "wb+");
 
     if (file == NULL) puts("Erro ao abrir arquivo binário\n");
 
@@ -167,7 +167,7 @@ FILE* criar_arquivo_binario(char quadro[SIZE][SIZE]) {
         }
     }
 
-    fclose(file);
+    return file;
 }
 
 /* -----------------------------------------------------------------------------
@@ -175,7 +175,7 @@ FILE* criar_arquivo_binario(char quadro[SIZE][SIZE]) {
  * Dado as posicoes x e y, determina o quadrante do quadro
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-int determinar_quadrante (int x, int y) {
+int determinar_quadrante(int x, int y) {
 	if (x < 3 && y < 3)
 		return 1;
 	else if (x < 3 && y < 6)
@@ -201,15 +201,13 @@ int determinar_quadrante (int x, int y) {
  * Determina se um valor na posicao x e y e valido
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-int e_valido (const char quadro[SIZE][SIZE], int x, int y, int valor) {
+int e_valido(const char quadro[SIZE][SIZE], int x, int y, int valor) {
+    if (valor == 0) return VERDADEIRO;
 
 	// verifica as tres condicoes
-	if (!e_valido_na_coluna(quadro, y, valor))
-		return FALSO;
-	if (!e_valido_na_linha(quadro, x, valor))
-		return FALSO;
-	if (!e_valido_no_quadro3x3(quadro, x, y, valor))
-		return FALSO;
+	if (!e_valido_na_coluna(quadro, y, valor)) return FALSO;
+	if (!e_valido_na_linha(quadro, x, valor)) return FALSO;
+	if (!e_valido_no_quadro3x3(quadro, x, y, valor)) return FALSO;
 
 	return VERDADEIRO;
 }
@@ -219,8 +217,12 @@ int e_valido (const char quadro[SIZE][SIZE], int x, int y, int valor) {
  * Verifica se um valor na coluna y e valido
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-int e_valido_na_coluna (const char quadro[SIZE][SIZE], int y, int valor) {
-	// TODO
+int e_valido_na_coluna(const char quadro[SIZE][SIZE], int y, int valor) {
+    for (int i = 0; i < SIZE; i++) {
+        if (quadro[i][y] == valor) return FALSO;
+    }
+
+    return VERDADEIRO;
 }
 
 /* -----------------------------------------------------------------------------
@@ -228,8 +230,12 @@ int e_valido_na_coluna (const char quadro[SIZE][SIZE], int y, int valor) {
  * Verifica se um valor na linha x e valido
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-int e_valido_na_linha (const char quadro[SIZE][SIZE], int x, int valor) {
-	// TODO
+int e_valido_na_linha(const char quadro[SIZE][SIZE], int x, int valor) {
+    for (int i = 0; i < SIZE; i++) {
+        if (quadro[x][i] == valor) return FALSO;
+    }
+
+    return VERDADEIRO;
 }
 
 /* -----------------------------------------------------------------------------
@@ -237,8 +243,72 @@ int e_valido_na_linha (const char quadro[SIZE][SIZE], int x, int valor) {
  * Verifica se um valor e valido no quadrante da posicao x, y
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-int e_valido_no_quadro3x3 (const char quadro[SIZE][SIZE], int x, int y, int valor) {
-	// TODO
+int e_valido_no_quadro3x3(const char quadro[SIZE][SIZE], int x, int y, int valor) {
+    if (x < 3 && y < 3) {
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (quadro[i][j] == valor) return FALSO;
+            }
+        }
+    }
+    else if (x < 3 && y < 6) {
+        for (int i = 0; i < 3; i++) {
+            for (int j = 3; j < 6; j++) {
+                if (quadro[i][j] == valor) return FALSO;
+            }
+        }
+    }
+    else if (x < 3 && y < 9) {
+        for (int i = 0; i < 3; i++) {
+            for (int j = 6; j < 9; j++) {
+                if (quadro[i][j] == valor) return FALSO;
+            }
+        }
+    }
+    else if (x < 6 && y < 3) {
+        for (int i = 3; i < 6; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (quadro[i][j] == valor) return FALSO;
+            }
+        }
+    }
+    else if (x < 6 && y < 6) {
+        for (int i = 3; i < 6; i++) {
+            for (int j = 3; j < 6; j++) {
+                if (quadro[i][j] == valor) return FALSO;
+            }
+        }
+    }
+    else if (x < 6 && y < 9) {
+        for (int i = 3; i < 6; i++) {
+            for (int j = 6; j < 9; j++) {
+                if (quadro[i][j] == valor) return FALSO;
+            }
+        }
+    }
+    else if (x < 9 && y < 3) {
+        for (int i = 6; i < 9; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (quadro[i][j] == valor) return FALSO;
+            }
+        }
+    }
+    else if (x < 9 && y < 6) {
+        for (int i = 6; i < 9; i++) {
+            for (int j = 3; j < 6; j++) {
+                if (quadro[i][j] == valor) return FALSO;
+            }
+        }
+    }
+    else {
+        for (int i = 6; i < 9; i++) {
+            for (int j = 6; j < 9; j++) {
+                if (quadro[i][j] == valor) return FALSO;
+            }
+        }
+    }
+
+    return VERDADEIRO;
 }
 
 
@@ -370,6 +440,8 @@ void jogar() {
 			break;
 		}
 	}
+
+    fclose(fb);
 }
 
 /* -----------------------------------------------------------------------------
@@ -392,7 +464,21 @@ void resolver (FILE *fb, char quadro[SIZE][SIZE]) {
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 void resolver_um_passo (char quadro[SIZE][SIZE]) {
-	// TODO
+    int n = 1;
+
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            if (quadro[i][j] == 0) {
+                while (n < SIZE) {
+                    if (e_valido(quadro, i, j, n)) {
+                        quadro[i][j] = n;
+                    }
+
+                    n++;
+                }
+            }
+        }
+    }
 }
 
 /* -----------------------------------------------------------------------------
@@ -400,8 +486,17 @@ void resolver_um_passo (char quadro[SIZE][SIZE]) {
  * Salva o estado atual do quadro no arquivo binario
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-void salvar_jogada_bin (FILE *fb, char quadro[SIZE][SIZE]) {
-	// TODO
+void salvar_jogada_bin(FILE *fb, char quadro[SIZE][SIZE]) {
+    int n = 0;
+
+    fseek(fb, 0, SEEK_END);
+
+    for (int i = 0; i < SIZE; i++) {
+        for (int j = 0; j < SIZE; j++) {
+            n = quadro[i][j];
+            fwrite(&n, sizeof(int), 1, fb);
+        }
+    }
 }
 
 /* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
