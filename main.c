@@ -104,7 +104,7 @@ FILE* carregar_continuar_jogo(char quadro[SIZE][SIZE], char *nome_arquivo) {
 
     file = fopen(nome_arquivo, "rb+");
 
-    if (file == NULL) printf("Erro ao abrir arquivo!\n");
+    if (file == NULL) printf(ERROR_FILE_MSG);
 
     fseek(file, sizeof(int)*((SIZE*SIZE)*-1), SEEK_END);
 
@@ -131,7 +131,7 @@ void carregar_novo_jogo(char quadro[SIZE][SIZE], char *nome_arquivo) {
 
     file = fopen(nome_arquivo, "r");
 
-    if (file == NULL) printf("Erro ao abrir arquivo!\n");
+    if (file == NULL) printf(ERROR_FILE_MSG);
 
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
@@ -159,7 +159,7 @@ FILE* criar_arquivo_binario(char quadro[SIZE][SIZE]) {
 
     file = fopen(gameName, "wb+");
 
-    if (file == NULL) puts("Erro ao abrir arquivo binário\n");
+    if (file == NULL) puts(ERROR_FILE_MSG);
 
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
