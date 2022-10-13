@@ -18,13 +18,14 @@ int isValidColumn(const char[SIZE][SIZE], int, int);
 int isValidSubMatrix(const char[SIZE][SIZE], int, int, int);
 int isValidLine(const char[SIZE][SIZE], int, int);
 int hasEmptyFields(const char[SIZE][SIZE]);
-void printBoard(const char[SIZE][SIZE]);
+void printBoard(const char[SIZE][SIZE], int);
 void play();
 void solve(FILE*, char[SIZE][SIZE]);
 void solveNextPosition(char[SIZE][SIZE]);
 void saveGame(FILE*, char[SIZE][SIZE]);
 int fill(char[SIZE][SIZE], int, int, int);
 char* askForFileName();
+int readMovementsNumber(FILE*);
 
 int fim_x(int);
 int fim_y(int);
@@ -211,10 +212,10 @@ int hasEmptyFields(const char board[SIZE][SIZE]) {
 	return FALSE;
 }
 
-void printBoard(const char board[SIZE][SIZE]) {
+void printBoard(const char board[SIZE][SIZE], int numberOfTurns) {
 	int i, j;
 
-	puts("    1 2 3   4 5 6   7 8 9");
+	puts("\n    1 2 3   4 5 6   7 8 9");
 	for (i = 0; i < 9; i++) {
 		if (i % 3 == 0)
 			puts("  -------------------------");
@@ -233,6 +234,8 @@ void printBoard(const char board[SIZE][SIZE]) {
 		puts("|");
 	}
 	puts("  -------------------------");
+
+    printf("Numero de jogadas: %d\n", numberOfTurns);
 }
 
 void play() {
@@ -253,7 +256,7 @@ void play() {
 	FILE *file = NULL;
 
 	while (choice != 9) {
-		printBoard(board);
+		printBoard(board, readMovementsNumber(file));
 
 		menu();
 		choice = readChoice();
@@ -313,6 +316,20 @@ void play() {
     fclose(file);
 }
 
+int readMovementsNumber(FILE *file) {
+    int count = 0;
+
+    if (file != NULL) {
+        fseek(file, 0, SEEK_SET);
+
+        fread(&count, sizeof(int), 1, file);
+
+        return count;
+    }
+
+    return 0;
+}
+
 void solve(FILE *fb, char board[SIZE][SIZE]) {
 	while(hasEmptyFields(board)) {
         solveNextPosition(board);
@@ -360,15 +377,13 @@ int fill(char board[SIZE][SIZE], int i, int j, int value)
 }
 
 void saveGame(FILE *file, char board[SIZE][SIZE]) {
-    int n = 0, count = 2;
+    int n = 0, count = 0;
 
     fseek(file, 0, SEEK_SET);
 
     fread(&count, sizeof(int), 1, file);
 
-    count += 1;
-
-    printf("Número de jogadas: %d\n", count);
+    count++;
 
     fseek(file, 0, SEEK_SET);
 
