@@ -249,8 +249,8 @@ int e_valido_no_quadro3x3(const char quadro[SIZE][SIZE], int x, int y, int valor
 
     subMatriz = determinar_quadrante(x, y);
 
-    for (int i = ini_x(subMatriz); i < 3; i++) {
-        for (int j = ini_y(subMatriz); j < 3; j++) {
+    for (int i = ini_x(subMatriz); i < fim_x(subMatriz); i++) {
+        for (int j = ini_y(subMatriz); j < fim_y(subMatriz); j++) {
             if (quadro[i][j] == valor) return FALSO;
         }
     }
