@@ -26,6 +26,7 @@ void jogar();
 void resolver(FILE*, char[SIZE][SIZE]);
 void resolver_um_passo(char[SIZE][SIZE]);
 void salvar_jogada_bin(FILE*, char[SIZE][SIZE]);
+int fill(char[SIZE][SIZE], int, int, int);
 
 /* Funcoes auxiliares */
 int fim_x(int);
@@ -321,8 +322,8 @@ int e_valido_no_quadro3x3(const char quadro[SIZE][SIZE], int x, int y, int valor
 int existe_campo_vazio (const char quadro[SIZE][SIZE]) {
 	int i, j;
 
-	for(i = 0; i < 9; i++) {
-		for(j = 0; j < 9; j++) {
+	for (i = 0; i < 9; i++) {
+		for (j = 0; j < 9; j++) {
 			if (quadro[i][j] == 0)
 				return VERDADEIRO;
 		}
@@ -463,21 +464,37 @@ void resolver (FILE *fb, char quadro[SIZE][SIZE]) {
  * Preenche apenas um campo vazio
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
-void resolver_um_passo (char quadro[SIZE][SIZE]) {
-    int n = 1;
+void resolver_um_passo(char quadro[SIZE][SIZE]) {
+    int found = 0;
 
-    for (int i = 0; i < SIZE; i++) {
-        for (int j = 0; j < SIZE; j++) {
+    for (int i = 0; i < SIZE && !found; i++) {
+        for (int j = 0; j < SIZE && !found; j++) {
             if (quadro[i][j] == 0) {
-                while (n < SIZE) {
-                    if (e_valido(quadro, i, j, n)) {
-                        quadro[i][j] = n;
-                    }
-
-                    n++;
-                }
+                found = fill(quadro, i, j, 1);
             }
         }
+    }
+}
+
+int fill(char quadro[SIZE][SIZE], int i, int j, int value)
+{
+    if (value <=  9 && e_valido(quadro, i, j, value)) {
+        quadro[i][j] = value;
+
+        return VERDADEIRO;
+    } else {
+        if (value < 9) {
+            fill(quadro, i, j, ++value);
+        } else {
+            if (j == 0 && i != 0) {
+                i -= 1;
+                j = SIZE-1;
+            }
+            quadro[i][j] = 0;
+            fill(quadro, i, j-1, quadro[i][j-1]+1);
+        }
+
+        return VERDADEIRO;
     }
 }
 
