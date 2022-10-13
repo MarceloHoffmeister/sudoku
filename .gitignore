@@ -1,6 +1,4 @@
 
-*.txt
-
 bin/Debug/
 
 obj/Debug/
@@ -10,3 +8,5 @@ sudoku.layout
 .idea/
 
 cmake-build-debug/
+
+CMakeLists.txt
