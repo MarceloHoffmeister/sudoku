@@ -245,67 +245,13 @@ int e_valido_na_linha(const char quadro[SIZE][SIZE], int x, int valor) {
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  */
 int e_valido_no_quadro3x3(const char quadro[SIZE][SIZE], int x, int y, int valor) {
-    if (x < 3 && y < 3) {
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                if (quadro[i][j] == valor) return FALSO;
-            }
-        }
-    }
-    else if (x < 3 && y < 6) {
-        for (int i = 0; i < 3; i++) {
-            for (int j = 3; j < 6; j++) {
-                if (quadro[i][j] == valor) return FALSO;
-            }
-        }
-    }
-    else if (x < 3 && y < 9) {
-        for (int i = 0; i < 3; i++) {
-            for (int j = 6; j < 9; j++) {
-                if (quadro[i][j] == valor) return FALSO;
-            }
-        }
-    }
-    else if (x < 6 && y < 3) {
-        for (int i = 3; i < 6; i++) {
-            for (int j = 0; j < 3; j++) {
-                if (quadro[i][j] == valor) return FALSO;
-            }
-        }
-    }
-    else if (x < 6 && y < 6) {
-        for (int i = 3; i < 6; i++) {
-            for (int j = 3; j < 6; j++) {
-                if (quadro[i][j] == valor) return FALSO;
-            }
-        }
-    }
-    else if (x < 6 && y < 9) {
-        for (int i = 3; i < 6; i++) {
-            for (int j = 6; j < 9; j++) {
-                if (quadro[i][j] == valor) return FALSO;
-            }
-        }
-    }
-    else if (x < 9 && y < 3) {
-        for (int i = 6; i < 9; i++) {
-            for (int j = 0; j < 3; j++) {
-                if (quadro[i][j] == valor) return FALSO;
-            }
-        }
-    }
-    else if (x < 9 && y < 6) {
-        for (int i = 6; i < 9; i++) {
-            for (int j = 3; j < 6; j++) {
-                if (quadro[i][j] == valor) return FALSO;
-            }
-        }
-    }
-    else {
-        for (int i = 6; i < 9; i++) {
-            for (int j = 6; j < 9; j++) {
-                if (quadro[i][j] == valor) return FALSO;
-            }
+    int subMatriz;
+
+    subMatriz = determinar_quadrante(x, y);
+
+    for (int i = ini_x(subMatriz); i < 3; i++) {
+        for (int j = ini_y(subMatriz); j < 3; j++) {
+            if (quadro[i][j] == valor) return FALSO;
         }
     }
 
@@ -597,7 +543,7 @@ int ini_x (int quadr) {
 		case 1:
 		case 2:
 		case 3:
-			return 0;
+            return 0;
 
 		case 4:
 		case 5:
