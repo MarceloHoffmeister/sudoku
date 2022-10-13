@@ -126,6 +126,8 @@ FILE* createBinaryFile(char board[SIZE][SIZE]) {
 
     if (file == NULL) puts(ERROR_FILE_MSG);
 
+    fwrite(&n, sizeof(int), 1, file);
+
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
             n = board[i][j];
@@ -358,7 +360,19 @@ int fill(char board[SIZE][SIZE], int i, int j, int value)
 }
 
 void saveGame(FILE *file, char board[SIZE][SIZE]) {
-    int n = 0;
+    int n = 0, count = 2;
+
+    fseek(file, 0, SEEK_SET);
+
+    fread(&count, sizeof(int), 1, file);
+
+    count += 1;
+
+    printf("Número de jogadas: %d\n", count);
+
+    fseek(file, 0, SEEK_SET);
+
+    fwrite(&count, sizeof(int), 1, file);
 
     fseek(file, 0, SEEK_END);
 
