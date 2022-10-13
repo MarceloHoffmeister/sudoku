@@ -2,86 +2,56 @@
 #include <stdlib.h>
 #include <time.h>
 
-#define ERROR_FILE_MSG	"Nao foi possivel abrir o arquivo!\n"
-#define INVALID_OPTION	"Opcao invalida! Tente novamente!"
+#define ERROR_FILE_MSG "Nao foi possivel abrir o arquivo!\n"
+#define INVALID_OPTION "Opcao invalida! Tente novamente!"
 #define SIZE 9
 
-enum boolean {
-	FALSO=0, VERDADEIRO=1
-};
+enum boolean { FALSE = 0, TRUE = 1 };
 
-/* Prototipos */
-FILE* carregar(char[SIZE][SIZE]);
-FILE* carregar_continuar_jogo (char[SIZE][SIZE], char*);
-void carregar_novo_jogo(char[SIZE][SIZE], char*);
-int determinar_quadrante(int, int);
-FILE* criar_arquivo_binario(char[SIZE][SIZE]);
-int e_valido(const char[SIZE][SIZE], int, int, int);
-int e_valido_na_coluna(const char[SIZE][SIZE], int, int);
-int e_valido_no_quadro3x3(const char[SIZE][SIZE], int, int, int);
-int e_valido_na_linha(const char[SIZE][SIZE], int, int);
-int existe_campo_vazio(const char[SIZE][SIZE]);
-void imprimir(const char[SIZE][SIZE]);
-void jogar();
-void resolver(FILE*, char[SIZE][SIZE]);
-void resolver_um_passo(char[SIZE][SIZE]);
-void salvar_jogada_bin(FILE*, char[SIZE][SIZE]);
+FILE* load(char[SIZE][SIZE]);
+FILE* playSavedGame(char[SIZE][SIZE], char*);
+void playNewGame(char[SIZE][SIZE], char*);
+int whatSubMatrix(int, int);
+FILE* createBinaryFile(char[SIZE][SIZE]);
+int isValid(const char[SIZE][SIZE], int, int, int);
+int isValidColumn(const char[SIZE][SIZE], int, int);
+int isValidSubMatrix(const char[SIZE][SIZE], int, int, int);
+int isValidLine(const char[SIZE][SIZE], int, int);
+int hasEmptyFields(const char[SIZE][SIZE]);
+void printBoard(const char[SIZE][SIZE]);
+void play();
+void solve(FILE*, char[SIZE][SIZE]);
+void solveNextPosition(char[SIZE][SIZE]);
+void saveGame(FILE*, char[SIZE][SIZE]);
 int fill(char[SIZE][SIZE], int, int, int);
+char* askForFileName();
 
-/* Funcoes auxiliares */
 int fim_x(int);
 int fim_y(int);
-int le_opcao();
+int readChoice();
 void gen_random(char*, int);
 int ini_x(int);
 int ini_y(int);
 void menu();
-void menu_arquivo();
+void fileMenu();
 
-
-/* -----------------------------------------------------------------------------
- * -----------------------------------------------------------------------------
- * MAIN
- * /////////////////////////////////////////////////////////////////////////////
- */
-int main () {
-
-	// inicia o jogo
-	jogar();
+int main() {
+	play();
 
 	return 0;
 }
 
-/* -----------------------------------------------------------------------------
- * CARREGAR
- * Inicializa o SUDOKU a partir de um novo jogo ou estado de jogo anterior
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-FILE* carregar(char quadro[SIZE][SIZE]) {
-	int opcao;
-    char gameName[50];
+FILE* load(char board[SIZE][SIZE]) {
+	fileMenu();
 
-	menu_arquivo();
-	opcao = le_opcao();
-
-	// TODO Função incompleta
-
-	switch(opcao) {
-
-		// carregar novo sudoku
+	switch(readChoice()) {
 		case 1:
-            puts("Nome do arquivo a ser carregado: ");
-            scanf("%s", gameName);
-            carregar_novo_jogo(quadro, gameName);
+            playNewGame(board, askForFileName());
 			break;
 
-		// continuar jogo
 		case 2:
-            puts("Nome do arquivo a ser carregado: ");
-            scanf("%s", gameName);
-            return carregar_continuar_jogo(quadro, gameName);
+            return playSavedGame(board, askForFileName());
 
-		// retornar ao menu anterior
 		case 9:
 			break;
 
@@ -91,18 +61,23 @@ FILE* carregar(char quadro[SIZE][SIZE]) {
 	}
 }
 
-/* -----------------------------------------------------------------------------
- * CARREGAR CONTINUAR JOGO
- * Carrega um estado de jogo a partir de um arquivo binario
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-FILE* carregar_continuar_jogo(char quadro[SIZE][SIZE], char *nome_arquivo) {
+char* askForFileName()
+{
+    char *gameName = (char*) malloc(sizeof(char) * 50);
+
+    printf("Nome do arquivo a ser carregado: ");
+    scanf("%s", gameName);
+
+    return gameName;
+}
+
+FILE* playSavedGame(char board[SIZE][SIZE], char *fileName) {
     FILE *file;
     int n = 0;
 
-    sprintf(nome_arquivo, "%s.dat", nome_arquivo);
+    sprintf(fileName, "%s.dat", fileName);
 
-    file = fopen(nome_arquivo, "rb+");
+    file = fopen(fileName, "rb+");
 
     if (file == NULL) printf(ERROR_FILE_MSG);
 
@@ -111,44 +86,34 @@ FILE* carregar_continuar_jogo(char quadro[SIZE][SIZE], char *nome_arquivo) {
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
             fread(&n, sizeof(int), 1, file);
-            quadro[i][j] = n;
+            board[i][j] = n;
         }
     }
 
     return file;
 }
 
-/* -----------------------------------------------------------------------------
- * CARREGAR NOVO JOGO
- * Carrega um novo jogo do Sudoku
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-void carregar_novo_jogo(char quadro[SIZE][SIZE], char *nome_arquivo) {
+void playNewGame(char board[SIZE][SIZE], char *fileName) {
 	FILE *file;
     int n = 0;
 
-    sprintf(nome_arquivo, "%s.txt", nome_arquivo);
+    sprintf(fileName, "%s.txt", fileName);
 
-    file = fopen(nome_arquivo, "r");
+    file = fopen(fileName, "r");
 
     if (file == NULL) printf(ERROR_FILE_MSG);
 
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
             fscanf(file, "%d ", &n);
-            quadro[i][j] = n;
+            board[i][j] = n;
         }
     }
 
     fclose(file);
 }
 
-/* -----------------------------------------------------------------------------
- * CRIAR ARQUIVO BINARIO
- * Criar arquivo binario
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-FILE* criar_arquivo_binario(char quadro[SIZE][SIZE]) {
+FILE* createBinaryFile(char board[SIZE][SIZE]) {
 	FILE *file;
     const int gameNameLength = 8;
     char *gameName = (char*) malloc(sizeof(char)*(gameNameLength+7));
@@ -163,7 +128,7 @@ FILE* criar_arquivo_binario(char quadro[SIZE][SIZE]) {
 
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
-            n = quadro[i][j];
+            n = board[i][j];
             fwrite(&n, sizeof(int), 1, file);
         }
     }
@@ -171,12 +136,7 @@ FILE* criar_arquivo_binario(char quadro[SIZE][SIZE]) {
     return file;
 }
 
-/* -----------------------------------------------------------------------------
- * DETERMINAR QUADRANTE
- * Dado as posicoes x e y, determina o quadrante do quadro
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-int determinar_quadrante(int x, int y) {
+int whatSubMatrix(int x, int y) {
 	if (x < 3 && y < 3)
 		return 1;
 	else if (x < 3 && y < 6)
@@ -197,96 +157,61 @@ int determinar_quadrante(int x, int y) {
 		return 9;
 }
 
-/* -----------------------------------------------------------------------------
- * E VALIDO
- * Determina se um valor na posicao x e y e valido
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-int e_valido(const char quadro[SIZE][SIZE], int x, int y, int valor) {
-    if (valor == 0) return VERDADEIRO;
+int isValid(const char board[SIZE][SIZE], int x, int y, int value) {
+    if (value == 0) return TRUE;
 
-	// verifica as tres condicoes
-	if (!e_valido_na_coluna(quadro, y, valor)) return FALSO;
-	if (!e_valido_na_linha(quadro, x, valor)) return FALSO;
-	if (!e_valido_no_quadro3x3(quadro, x, y, valor)) return FALSO;
+	if (!isValidColumn(board, y, value)) return FALSE;
+	if (!isValidLine(board, x, value)) return FALSE;
+	if (!isValidSubMatrix(board, x, y, value)) return FALSE;
 
-	return VERDADEIRO;
+	return TRUE;
 }
 
-/* -----------------------------------------------------------------------------
- * E VALIDO NA COLUNA
- * Verifica se um valor na coluna y e valido
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-int e_valido_na_coluna(const char quadro[SIZE][SIZE], int y, int valor) {
+int isValidColumn(const char board[SIZE][SIZE], int y, int value) {
     for (int i = 0; i < SIZE; i++) {
-        if (quadro[i][y] == valor) return FALSO;
+        if (board[i][y] == value) return FALSE;
     }
 
-    return VERDADEIRO;
+    return TRUE;
 }
 
-/* -----------------------------------------------------------------------------
- * E VALIDO NA LINHA
- * Verifica se um valor na linha x e valido
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-int e_valido_na_linha(const char quadro[SIZE][SIZE], int x, int valor) {
+int isValidLine(const char board[SIZE][SIZE], int x, int value) {
     for (int i = 0; i < SIZE; i++) {
-        if (quadro[x][i] == valor) return FALSO;
+        if (board[x][i] == value) return FALSE;
     }
 
-    return VERDADEIRO;
+    return TRUE;
 }
 
-/* -----------------------------------------------------------------------------
- * E VALIDO NO QUADRO 3X3
- * Verifica se um valor e valido no quadrante da posicao x, y
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-int e_valido_no_quadro3x3(const char quadro[SIZE][SIZE], int x, int y, int valor) {
-    int subMatriz;
+int isValidSubMatrix(const char board[SIZE][SIZE], int x, int y, int value) {
+    int subMatrix;
 
-    subMatriz = determinar_quadrante(x, y);
+    subMatrix = whatSubMatrix(x, y);
 
-    for (int i = ini_x(subMatriz); i <= fim_x(subMatriz); i++) {
-        for (int j = ini_y(subMatriz); j <= fim_y(subMatriz); j++) {
-            if (quadro[i][j] == valor) return FALSO;
+    for (int i = ini_x(subMatrix); i <= fim_x(subMatrix); i++) {
+        for (int j = ini_y(subMatrix); j <= fim_y(subMatrix); j++) {
+            if (board[i][j] == value) return FALSE;
         }
     }
 
-    return VERDADEIRO;
+    return TRUE;
 }
 
-
-
-/* -----------------------------------------------------------------------------
- * EXISTE CAMPO VAZIO
- * Verifica se existe um campo nao preenchido
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-int existe_campo_vazio (const char quadro[SIZE][SIZE]) {
-	int i, j;
-
-	for (i = 0; i < 9; i++) {
-		for (j = 0; j < 9; j++) {
-			if (quadro[i][j] == 0)
-				return VERDADEIRO;
+int hasEmptyFields(const char board[SIZE][SIZE]) {
+	for (int i = 0; i < 9; i++) {
+		for (int j = 0; j < 9; j++) {
+			if (board[i][j] == 0) {
+                return TRUE;
+            }
 		}
 	}
 
-	return FALSO;
+	return FALSE;
 }
 
-/* -----------------------------------------------------------------------------
- * IMPRIMIR
- * Imprime o quadro inteiro do sudoku
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-void imprimir (const char quadro[SIZE][SIZE]) {
+void printBoard(const char board[SIZE][SIZE]) {
 	int i, j;
 
-//	puts("~~~~~~~~ SUDOKU ~~~~~~~~");
 	puts("    1 2 3   4 5 6   7 8 9");
 	for (i = 0; i < 9; i++) {
 		if (i % 3 == 0)
@@ -298,24 +223,20 @@ void imprimir (const char quadro[SIZE][SIZE]) {
 			else if (j % 3 == 0)
 				printf("| ");
 
-			if (quadro[i][j] == 0)
+			if (board[i][j] == 0)
 				printf("- ");
 			else
-				printf("%d ", quadro[i][j]);
+				printf("%d ", board[i][j]);
 		}
 		puts("|");
 	}
 	puts("  -------------------------");
 }
 
-/* -----------------------------------------------------------------------------
- * JOGAR
- * Realiza toda a logica do jogo
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-void jogar() {
-	int opcao;
-	char quadro[9][9] = {
+void play() {
+	int choice = 0;
+
+	char board[9][9] = {
             {0, 0, 0, 0, 0, 0, 0, 0, 0},
 			{0, 0, 0, 0, 0, 0, 0, 0, 0},
 			{0, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -326,189 +247,148 @@ void jogar() {
 			{0, 0, 0, 0, 0, 0, 0, 0, 0},
 			{0, 0, 0, 0, 0, 0, 0, 0, 0}
 	};
-	FILE *fb = NULL;
 
-	opcao = 0;
+	FILE *file = NULL;
 
-	while (opcao != 9) {
-		// imprime na tela o quadro atual
-		imprimir(quadro);
+	while (choice != 9) {
+		printBoard(board);
 
-		// apresenta um menu com as opcoes
 		menu();
-		opcao = le_opcao();
+		choice = readChoice();
 
-		switch(opcao) {
+		switch(choice) {
+            case 1:
+                file = load(board);
 
-		// carregar sudoku
-		case 1:
-			fb = carregar(quadro);
+                if (file == NULL) {
+                    file = createBinaryFile(board);
+                }
+                break;
 
-			if (fb == NULL) {
-				fb = criar_arquivo_binario(quadro);
-			}
-			break;
+            case 2: {
+                int x, y, value;
 
-		// preencher quadro com um valor
-		case 2: {
-			int x, y, valor;
+                printf("Entre com a posicao e o valor (linha, coluna, valor): ");
+                scanf("%d %d %d", &x, &y, &value);
 
-			printf("Entre com a posicao e o valor (linha, coluna, valor): ");
-			scanf("%d %d %d", &x, &y, &valor);
-
-
-			if (e_valido(quadro, x, y, valor)) {
-				quadro[x][y] = valor;
-				salvar_jogada_bin(fb, quadro);
-			}
-			else
-				puts("Valor ou posicao incorreta! Tente novamente!");
-		}
-			break;
-
-		// resolver 1 passo
-		case 3:
-            if (fb == NULL) {
-                fb = criar_arquivo_binario(quadro);
+                if (isValid(board, x, y, value)) {
+                    board[x][y] = value;
+                    saveGame(file, board);
+                } else {
+                    puts("Valor ou posicao incorreta! Tente novamente!");
+                }
+                break;
             }
-			resolver_um_passo(quadro);
-			salvar_jogada_bin(fb, quadro);
-			puts("Um passo resolvido!");
-			break;
 
-		// resolver o sudoku
-		case 4:
-            if (fb == NULL) {
-                fb = criar_arquivo_binario(quadro);
-            }
-			resolver(fb, quadro);
-			break;
+            case 3:
+                if (file == NULL) {
+                    file = createBinaryFile(board);
+                }
 
-		case 9:
-			puts("Programa finalizado ..");
-			break;
+                solveNextPosition(board);
+                saveGame(file, board);
+                puts("Um passo resolvido!");
+                break;
 
-		default:
-			puts(INVALID_OPTION);
-			break;
+            case 4:
+                if (file == NULL) {
+                    file = createBinaryFile(board);
+                }
+
+                solve(file, board);
+                break;
+
+            case 9:
+                puts("Programa finalizado ..");
+                break;
+
+            default:
+                puts(INVALID_OPTION);
+                break;
 		}
 	}
 
-    fclose(fb);
+    fclose(file);
 }
 
-/* -----------------------------------------------------------------------------
- * RESOLVER
- * Resolve o sudoku
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-void resolver (FILE *fb, char quadro[SIZE][SIZE]) {
-
-	// enquanto houver posicoes vazias no quadro
-	while(existe_campo_vazio(quadro)) {
-		resolver_um_passo(quadro);
-		salvar_jogada_bin(fb, quadro);
+void solve(FILE *fb, char board[SIZE][SIZE]) {
+	while(hasEmptyFields(board)) {
+        solveNextPosition(board);
+        saveGame(fb, board);
 	}
 }
 
-/* -----------------------------------------------------------------------------
- * RESOLVER UM PASSO
- * Preenche apenas um campo vazio
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-void resolver_um_passo(char quadro[SIZE][SIZE]) {
+void solveNextPosition(char board[SIZE][SIZE]) {
     int found = 0;
 
     for (int i = 0; i < SIZE && !found; i++) {
         for (int j = 0; j < SIZE && !found; j++) {
-            if (quadro[i][j] == 0) {
-                found = fill(quadro, i, j, 1);
+            if (board[i][j] == 0) {
+                found = fill(board, i, j, 1);
             }
         }
     }
 }
 
-int fill(char quadro[SIZE][SIZE], int i, int j, int value)
+int fill(char board[SIZE][SIZE], int i, int j, int value)
 {
-    if (value <= 9 && e_valido(quadro, i, j, value)) {
-        quadro[i][j] = value;
+    if (value <= 9 && isValid(board, i, j, value)) {
+        board[i][j] = value;
 
-        return VERDADEIRO;
+        return TRUE;
     } else {
         if (value < 9) {
-            fill(quadro, i, j, ++value);
+            fill(board, i, j, ++value);
         } else {
-            quadro[i][j] = 0;
+            board[i][j] = 0;
 
             if (j == 0 && i != 0) {
                 i -= 1;
                 j = SIZE-1;
             } else {
                 j -= 1;
-                value = quadro[i][j]+1;
+                value = board[i][j]+1;
             }
 
-            fill(quadro, i, j, value);
+            fill(board, i, j, value);
         }
 
-        return VERDADEIRO;
+        return TRUE;
     }
 }
 
-/* -----------------------------------------------------------------------------
- * SALVAR JOGADA BINARIO
- * Salva o estado atual do quadro no arquivo binario
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-void salvar_jogada_bin(FILE *fb, char quadro[SIZE][SIZE]) {
+void saveGame(FILE *file, char board[SIZE][SIZE]) {
     int n = 0;
 
-    fseek(fb, 0, SEEK_END);
+    fseek(file, 0, SEEK_END);
 
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < SIZE; j++) {
-            n = quadro[i][j];
-            fwrite(&n, sizeof(int), 1, fb);
+            n = board[i][j];
+            fwrite(&n, sizeof(int), 1, file);
         }
     }
 }
 
-/* ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * 							FUNCOES AUXILIARES
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
+int fim_x(int subMatrix) {
+    switch (subMatrix) {
+        case 1:
+        case 2:
+        case 3:
+            return 2;
 
-/* -----------------------------------------------------------------------------
- * FIM X
- * Indice final da linha para o quadrante recebido como parametro
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-int fim_x (int quadr) {
-	switch(quadr) {
-		case 1:
-		case 2:
-		case 3:
-			return 2;
+        case 4:
+        case 5:
+        case 6:
+            return 5;
 
-		case 4:
-		case 5:
-		case 6:
-			return 5;
-
-		default:
-			return 8;
-	}
+        default:
+            return 8;
+    }
 }
 
-/* -----------------------------------------------------------------------------
- * FIM Y
- * Indice final da coluna para o quadrante recebido como parametro
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-int fim_y (int quadr) {
-	switch(quadr) {
+int fim_y(int subMatrix) {
+	switch (subMatrix) {
 		case 1:
 		case 4:
 		case 7:
@@ -524,33 +404,25 @@ int fim_y (int quadr) {
 	}
 }
 
-/* -----------------------------------------------------------------------------
- * GEN_RANDOM
- * Gera uma cadeira de caracteres randomica de tamanho len
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-void gen_random (char *s, const int len) {
+void gen_random(char *string, const int stringLength) {
 	srand(time(NULL));
+
     static const char alphanum[] =
         "0123456789"
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         "abcdefghijklmnopqrstuvwxyz";
+
 	int i;
 
-    for (i = 0; i < len; i++) {
-        s[i] = alphanum[rand() % (sizeof(alphanum) - 1)];;
+    for (i = 0; i < stringLength; i++) {
+        string[i] = alphanum[rand() % (sizeof(alphanum) - 1)];;
     }
 
-    s[len] = 0;
+    string[stringLength] = 0;
 }
 
-/* -----------------------------------------------------------------------------
- * INI X
- * Indice inicial da linha para o quadrante recebido como parametro
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-int ini_x (int quadr) {
-	switch(quadr) {
+int ini_x(int subMatrix) {
+	switch (subMatrix) {
 		case 1:
 		case 2:
 		case 3:
@@ -566,13 +438,8 @@ int ini_x (int quadr) {
 	}
 }
 
-/* -----------------------------------------------------------------------------
- * INI Y
- * Indice inicial da coluna para o quadrante recebido como parametro
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-int ini_y (int quadr) {
-	switch(quadr) {
+int ini_y(int subMatrix) {
+	switch(subMatrix) {
 		case 1:
 		case 4:
 		case 7:
@@ -588,45 +455,30 @@ int ini_y (int quadr) {
 	}
 }
 
-/* -----------------------------------------------------------------------------
- * LE OPCAO
- * Imprime a mensagem a faz a leitura da opcao
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-int le_opcao () {
-	int opcao;
+int readChoice() {
+	int choice;
 
 	printf("Opcao: ");
-	scanf("%d", &opcao);
+	scanf("%d", &choice);
 
-	return opcao;
+	return choice;
 }
 
-/* -----------------------------------------------------------------------------
- * MENU
- * Imprime o menu de opcoes
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-void menu () {
+void menu() {
 	puts("\n~~~~~~~~ SUDOKU ~~~~~~~~");
-	puts("[1] - Carregar jogo");
-	puts("[2] - Jogar");
-	puts("[3] - Resolver um passo");
-	puts("[4] - Resolver");
-	puts("[9] - Finalizar");
+	puts("[1] Carregar jogo");
+	puts("[2] Jogar");
+	puts("[3] Resolver um passo");
+	puts("[4] Resolver");
+	puts("[9] Finalizar");
 	puts("--------");
 }
 
-/* -----------------------------------------------------------------------------
- * MENU ARQUIVO
- * Imprime o menu de opcoes do arquivo
- * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- */
-void menu_arquivo () {
+void fileMenu() {
 	puts("\n~~~~~ MENU ARQUIVO ~~~~~");
-	puts("[1] - Novo jogo");
-	puts("[2] - Continuar jogo");
-	puts("[9] - Retornar ao menu anterior");
+	puts("[1] Novo jogo");
+	puts("[2] Continuar jogo");
+	puts("[9] Retornar ao menu anterior");
 	puts("--------");
 }
 
