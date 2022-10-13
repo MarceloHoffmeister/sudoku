@@ -1,0 +1,14 @@
+# depslib dependency file v1.0
+1665696063 source:/home/hoffmeister/CodeBlocksProjects/sudoku/main.c
+	<stdio.h>
+	<stdlib.h>
+	<time.h>
+	"helpers.h"
+
+1665695894 /home/hoffmeister/CodeBlocksProjects/sudoku/helpers.h
+
+1665696048 source:/home/hoffmeister/CodeBlocksProjects/sudoku/helpers.c
+	<stdio.h>
+	<stdlib.h>
+	<time.h>
+
