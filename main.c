@@ -249,8 +249,8 @@ int e_valido_no_quadro3x3(const char quadro[SIZE][SIZE], int x, int y, int valor
 
     subMatriz = determinar_quadrante(x, y);
 
-    for (int i = ini_x(subMatriz); i < fim_x(subMatriz); i++) {
-        for (int j = ini_y(subMatriz); j < fim_y(subMatriz); j++) {
+    for (int i = ini_x(subMatriz); i <= fim_x(subMatriz); i++) {
+        for (int j = ini_y(subMatriz); j <= fim_y(subMatriz); j++) {
             if (quadro[i][j] == valor) return FALSO;
         }
     }
@@ -368,6 +368,9 @@ void jogar() {
 
 		// resolver 1 passo
 		case 3:
+            if (fb == NULL) {
+                fb = criar_arquivo_binario(quadro);
+            }
 			resolver_um_passo(quadro);
 			salvar_jogada_bin(fb, quadro);
 			puts("Um passo resolvido!");
@@ -375,6 +378,9 @@ void jogar() {
 
 		// resolver o sudoku
 		case 4:
+            if (fb == NULL) {
+                fb = criar_arquivo_binario(quadro);
+            }
 			resolver(fb, quadro);
 			break;
 
@@ -424,7 +430,7 @@ void resolver_um_passo(char quadro[SIZE][SIZE]) {
 
 int fill(char quadro[SIZE][SIZE], int i, int j, int value)
 {
-    if (value <=  9 && e_valido(quadro, i, j, value)) {
+    if (value <= 9 && e_valido(quadro, i, j, value)) {
         quadro[i][j] = value;
 
         return VERDADEIRO;
@@ -432,12 +438,17 @@ int fill(char quadro[SIZE][SIZE], int i, int j, int value)
         if (value < 9) {
             fill(quadro, i, j, ++value);
         } else {
+            quadro[i][j] = 0;
+
             if (j == 0 && i != 0) {
                 i -= 1;
                 j = SIZE-1;
+            } else {
+                j -= 1;
+                value = quadro[i][j]+1;
             }
-            quadro[i][j] = 0;
-            fill(quadro, i, j-1, quadro[i][j-1]+1);
+
+            fill(quadro, i, j, value);
         }
 
         return VERDADEIRO;
