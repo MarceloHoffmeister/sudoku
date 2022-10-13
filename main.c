@@ -1,10 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "helpers.h"
+#include "file.h"
 
-#define ERROR_FILE_MSG "Nao foi possivel abrir o arquivo!\n"
 #define INVALID_OPTION "Opcao invalida! Tente novamente!"
-#define SIZE 9
 
 enum boolean { FALSE = 0, TRUE = 1 };
 
@@ -12,7 +11,6 @@ FILE* load(char[SIZE][SIZE]);
 FILE* playSavedGame(char[SIZE][SIZE], char*);
 void playNewGame(char[SIZE][SIZE], char*);
 int whatSubMatrix(int, int);
-FILE* createBinaryFile(char[SIZE][SIZE]);
 int isValid(const char[SIZE][SIZE], int, int, int);
 int isValidColumn(const char[SIZE][SIZE], int, int);
 int isValidSubMatrix(const char[SIZE][SIZE], int, int, int);
@@ -22,10 +20,8 @@ void printBoard(const char[SIZE][SIZE], int);
 void play();
 void solve(FILE*, char[SIZE][SIZE]);
 void solveNextPosition(char[SIZE][SIZE]);
-void saveGame(FILE*, char[SIZE][SIZE]);
 int fill(char[SIZE][SIZE], int, int, int);
 char* askForFileName();
-int readMovementsNumber(FILE*);
 
 int main() {
 	play();
@@ -103,31 +99,6 @@ void playNewGame(char board[SIZE][SIZE], char *fileName) {
     }
 
     fclose(file);
-}
-
-FILE* createBinaryFile(char board[SIZE][SIZE]) {
-	FILE *file;
-    const int gameNameLength = 8;
-    char *gameName = (char*) malloc(sizeof(char)*(gameNameLength+7));
-    int n = 0;
-
-    gen_random(gameName, gameNameLength);
-    sprintf(gameName, "%s.dat", gameName);
-
-    file = fopen(gameName, "wb+");
-
-    if (file == NULL) puts(ERROR_FILE_MSG);
-
-    fwrite(&n, sizeof(int), 1, file);
-
-    for (int i = 0; i < SIZE; i++) {
-        for (int j = 0; j < SIZE; j++) {
-            n = board[i][j];
-            fwrite(&n, sizeof(int), 1, file);
-        }
-    }
-
-    return file;
 }
 
 int whatSubMatrix(int x, int y) {
@@ -307,20 +278,6 @@ void play() {
     fclose(file);
 }
 
-int readMovementsNumber(FILE *file) {
-    int count = 0;
-
-    if (file != NULL) {
-        fseek(file, 0, SEEK_SET);
-
-        fread(&count, sizeof(int), 1, file);
-
-        return count;
-    }
-
-    return 0;
-}
-
 void solve(FILE *fb, char board[SIZE][SIZE]) {
 	while(hasEmptyFields(board)) {
         solveNextPosition(board);
@@ -364,29 +321,6 @@ int fill(char board[SIZE][SIZE], int i, int j, int value)
         }
 
         return TRUE;
-    }
-}
-
-void saveGame(FILE *file, char board[SIZE][SIZE]) {
-    int n = 0, count = 0;
-
-    fseek(file, 0, SEEK_SET);
-
-    fread(&count, sizeof(int), 1, file);
-
-    count++;
-
-    fseek(file, 0, SEEK_SET);
-
-    fwrite(&count, sizeof(int), 1, file);
-
-    fseek(file, 0, SEEK_END);
-
-    for (int i = 0; i < SIZE; i++) {
-        for (int j = 0; j < SIZE; j++) {
-            n = board[i][j];
-            fwrite(&n, sizeof(int), 1, file);
-        }
     }
 }
 
